@@ -1,0 +1,266 @@
+<html>
+<head>
+<script src="http://code.jquery.com/jquery.min.js"></script>
+<script src="http://maps.google.com/maps/api/js?key=AIzaSyDxnB8sy565FI_sYuSkLRUg81vZ4Uvei3o"></script>
+<script type="text/javascript">
+var Nodes;
+var Edas;
+var TreePar;
+var TreeRank;
+var TreeSelectedEdas;
+var OneStrokeArray;
+var SelectedNodes;
+var MinNodes;
+
+// ノード情報
+function Node(name, ido, keido) {
+	this.name = name;
+	this.ido = ido;
+	this.keido = keido;
+}
+
+// 枝情報
+function Eda(point1, point2, len) {
+	this.point1 = point1;
+	this.point2 = point2;
+	this.len = len;
+}
+
+// UnionFind木の木の根を探索
+function find(x) {
+	if (TreePar[x] == x) {
+		return x;
+	} else {
+		return find(TreePar[x]);
+	}
+}
+
+// UnionFind木の属する集合を併合
+function unite(x, y) {
+	// 木の根を求める
+	x = find(x);
+	y = find(y);
+	if (x == y) {
+		return;
+	}
+
+	// 木が浅い方に併合する
+	if (TreeRank[x] < TreeRank[y]) {
+		TreePar[x] = y;
+	} else {
+		TreePar[y] = x;
+		if (TreeRank[x] == TreeRank[y]) {
+			TreeRank[x]++;
+		}
+	}
+}
+
+// UnionFind木の同じ集合に属するかどうか
+function same(x, y) {
+	return find(x) == find(y);
+}
+
+// 最小コストの経路を算出
+function solve(x) {
+	if (SelectedNodes.has(x)) {
+	} else {
+		SelectedNodes.add(x);
+		MinNodes.push(Nodes[x]);
+		for (let i in OneStrokeArray[x]) {
+			solve(OneStrokeArray[x][i].point1);
+			solve(OneStrokeArray[x][i].point2);
+		}
+	}
+}
+
+// 巡回セールスマン問題
+function salesman() {
+
+	console.time("巡回セールスマン問題");
+
+	// データの初期化
+	Edas = [];
+	TreePar = [];
+	TreeRank = [];
+	TreeSelectedEdas = [];
+	OneStrokeArray = [];
+	SelectedNodes = new Set();
+	MinNodes = [];
+
+	/**
+	 * 最小全域木を求める クラスカル法
+	 */
+	console.log("Nodes");
+	console.log(Nodes);
+
+	// 枝の長さを計算する
+	for (let i in Nodes) {
+		for (let j in Nodes) {
+			if (i>=j) continue;
+			let len = Math.sqrt((Nodes[i].ido - Nodes[j].ido) ** 2 + (Nodes[i].keido - Nodes[j].keido) ** 2);
+			Edas.push(new Eda(i, j, len));
+		}
+	}
+
+	// 枝をソートする
+	Edas.sort(function(a, b) {
+		if (a.len > b.len) {
+			return 1;
+		} else {
+			return -1;
+		}
+	});
+	console.log("Sorted Edas");
+	console.log(Edas);
+
+	// UnionFind木を作る
+	for (let i in Nodes) {
+		TreePar[i] = i;
+		TreeRank[i] = 0;
+	}
+
+	// 枝の短い方から順にUnionFind木の集合を確認して採用していく
+	for (let i in Edas) {
+		if (!(same(Edas[i].point1, Edas[i].point2))) {
+			unite(Edas[i].point1, Edas[i].point2);
+			TreeSelectedEdas.push(Edas[i]);
+		}
+	}
+	console.log("TreeSelectedEdas");
+	console.log(TreeSelectedEdas);
+
+	/**
+	 * 最小全域木を一筆書きして1周しつつ、すでに立ち寄ったノードはスキップする
+	 */
+	for (let i in TreeSelectedEdas) {
+		if (OneStrokeArray[TreeSelectedEdas[i].point1] == null) {
+			OneStrokeArray[TreeSelectedEdas[i].point1] = [];
+		}
+		if (OneStrokeArray[TreeSelectedEdas[i].point2] == null) {
+			OneStrokeArray[TreeSelectedEdas[i].point2] = [];
+		}
+		OneStrokeArray[TreeSelectedEdas[i].point1].push(TreeSelectedEdas[i]);
+		OneStrokeArray[TreeSelectedEdas[i].point2].push(TreeSelectedEdas[i]);
+	}
+	console.log("OneStrokeArray");
+	console.log(OneStrokeArray);
+	
+	// スタート地点を設定して計算
+	solve("0");
+	console.log("MinNodes");
+	console.log(MinNodes);
+	
+	console.timeEnd("巡回セールスマン問題");
+
+}
+
+$(function() {
+	$("#select").click(function() {
+		$("input").prop("checked", true);
+	});
+	$("#nonselect").click(function() {
+		$("input").prop("checked", false);
+	});
+	$("#set").click(function() {
+		Nodes = [];
+		$("input:checked").each(function() {
+			Nodes.push(new Node($(this).data("name"), $(this).data("ido"), $(this).data("keido")));
+		});
+	});
+	$("#sales").click(function() {
+		salesman();
+	});
+	$("#view").click(function() {
+		// Google Mapで利用する初期設定用の変数
+		let latlng = new google.maps.LatLng(38, 138);
+		let opts = {
+			zoom: 5,
+			mapTypeId: google.maps.MapTypeId.ROADMAP,
+			center: latlng
+		};
+
+		// getElementById("map")の"map"は、body内の<div id="map">より
+		let map = new google.maps.Map(document.getElementById("map"), opts);
+
+		let pathArray = [];
+		for (let i in MinNodes) {
+			pathArray.push(new google.maps.LatLng(MinNodes[i].ido, MinNodes[i].keido));
+		}
+		// 巡回のため初期値を再設定
+		pathArray.push(new google.maps.LatLng(MinNodes[0].ido, MinNodes[0].keido));
+
+		// Polylineの初期設定
+		let polylineOpts = {
+			map: map,
+			path: pathArray
+		};
+		// 直前で作成したPolylineOptionsを利用してPolylineを作成
+		var let = new google.maps.Polyline(polylineOpts);
+	});
+});
+</script>
+</head>
+<body>
+<input type="button" id="select" value="全都市を選択状態にする"><br>
+<input type="button" id="nonselect" value="全都市を未選択状態にする"><br>
+<input type="button" id="set" value="都市を設定する"><br>
+<input type="button" id="sales" value="巡回セールスマン問題を解く"><br>
+<input type="button" id="view" value="GoogleMapで表示">
+
+<hr>
+
+<div id="map" style='width:600px;height:500px;'></div>
+
+<hr>
+
+<!-- みんなの知識【ちょっと便利帳】 http://www.benricho.org/ -->
+<input type="checkbox" data-name="北海道" data-ido="43.06417" data-keido="141.34694">北海道<br>
+<input type="checkbox" data-name="青森県" data-ido="40.82444" data-keido="140.74">青森県<br>
+<input type="checkbox" data-name="岩手県" data-ido="39.70361" data-keido="141.1525">岩手県<br>
+<input type="checkbox" data-name="宮城県" data-ido="38.26889" data-keido="140.87194">宮城県<br>
+<input type="checkbox" data-name="秋田県" data-ido="39.71861" data-keido="140.1025">秋田県<br>
+<input type="checkbox" data-name="山形県" data-ido="38.24056" data-keido="140.36333">山形県<br>
+<input type="checkbox" data-name="福島県" data-ido="37.75" data-keido="140.46778">福島県<br>
+<input type="checkbox" data-name="茨城県" data-ido="36.34139" data-keido="140.44667">茨城県<br>
+<input type="checkbox" data-name="栃木県" data-ido="36.56583" data-keido="139.88361">栃木県<br>
+<input type="checkbox" data-name="群馬県" data-ido="36.39111" data-keido="139.06083">群馬県<br>
+<input type="checkbox" data-name="埼玉県" data-ido="35.85694" data-keido="139.64889">埼玉県<br>
+<input type="checkbox" data-name="千葉県" data-ido="35.60472" data-keido="140.12333">千葉県<br>
+<input type="checkbox" data-name="東京都" data-ido="35.68944" data-keido="139.69167">東京都<br>
+<input type="checkbox" data-name="神奈川県" data-ido="35.44778" data-keido="139.6425">神奈川県<br>
+<input type="checkbox" data-name="新潟県" data-ido="37.90222" data-keido="139.02361">新潟県<br>
+<input type="checkbox" data-name="富山県" data-ido="36.69528" data-keido="137.21139">富山県<br>
+<input type="checkbox" data-name="石川県" data-ido="36.59444" data-keido="136.62556">石川県<br>
+<input type="checkbox" data-name="福井県" data-ido="36.06528" data-keido="136.22194">福井県<br>
+<input type="checkbox" data-name="山梨県" data-ido="35.66389" data-keido="138.56833">山梨県<br>
+<input type="checkbox" data-name="長野県" data-ido="36.65139" data-keido="138.18111">長野県<br>
+<input type="checkbox" data-name="岐阜県" data-ido="35.39111" data-keido="136.72222">岐阜県<br>
+<input type="checkbox" data-name="静岡県" data-ido="34.97694" data-keido="138.38306">静岡県<br>
+<input type="checkbox" data-name="愛知県" data-ido="35.18028" data-keido="136.90667">愛知県<br>
+<input type="checkbox" data-name="三重県" data-ido="34.73028" data-keido="136.50861">三重県<br>
+<input type="checkbox" data-name="滋賀県" data-ido="35.00444" data-keido="135.86833">滋賀県<br>
+<input type="checkbox" data-name="京都府" data-ido="35.02139" data-keido="135.75556">京都府<br>
+<input type="checkbox" data-name="大阪府" data-ido="34.68639" data-keido="135.52">大阪府<br>
+<input type="checkbox" data-name="兵庫県" data-ido="34.69139" data-keido="135.18306">兵庫県<br>
+<input type="checkbox" data-name="奈良県" data-ido="34.68528" data-keido="135.83278">奈良県<br>
+<input type="checkbox" data-name="和歌山県" data-ido="34.22611" data-keido="135.1675">和歌山県<br>
+<input type="checkbox" data-name="鳥取県" data-ido="35.50361" data-keido="134.23833">鳥取県<br>
+<input type="checkbox" data-name="島根県" data-ido="35.47222" data-keido="133.05056">島根県<br>
+<input type="checkbox" data-name="岡山県" data-ido="34.66167" data-keido="133.935">岡山県<br>
+<input type="checkbox" data-name="広島県" data-ido="34.39639" data-keido="132.45944">広島県<br>
+<input type="checkbox" data-name="山口県" data-ido="34.18583" data-keido="131.47139">山口県<br>
+<input type="checkbox" data-name="徳島県" data-ido="34.06583" data-keido="134.55944">徳島県<br>
+<input type="checkbox" data-name="香川県" data-ido="34.34028" data-keido="134.04333">香川県<br>
+<input type="checkbox" data-name="愛媛県" data-ido="33.84167" data-keido="132.76611">愛媛県<br>
+<input type="checkbox" data-name="高知県" data-ido="33.55972" data-keido="133.53111">高知県<br>
+<input type="checkbox" data-name="福岡県" data-ido="33.60639" data-keido="130.41806">福岡県<br>
+<input type="checkbox" data-name="佐賀県" data-ido="33.24944" data-keido="130.29889">佐賀県<br>
+<input type="checkbox" data-name="長崎県" data-ido="32.74472" data-keido="129.87361">長崎県<br>
+<input type="checkbox" data-name="熊本県" data-ido="32.78972" data-keido="130.74167">熊本県<br>
+<input type="checkbox" data-name="大分県" data-ido="33.23806" data-keido="131.6125">大分県<br>
+<input type="checkbox" data-name="宮崎県" data-ido="31.91111" data-keido="131.42389">宮崎県<br>
+<input type="checkbox" data-name="鹿児島県" data-ido="31.56028" data-keido="130.55806">鹿児島県<br>
+<input type="checkbox" data-name="沖縄県" data-ido="26.2125" data-keido="127.68111">沖縄県
+
+</body>
+</html>
