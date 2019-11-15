@@ -1,0 +1,98 @@
+<html>
+<head>
+<script src="https://code.jquery.com/jquery.min.js"></script>
+<script src="https://maps.google.com/maps/api/js?key=AIzaSyDxnB8sy565FI_sYuSkLRUg81vZ4Uvei3o"></script>
+<script src="script/salesman.js?20191115" type="text/javascript"></script>
+<script type="text/javascript">
+$(function() {
+	$("#select").click(function() {
+		$("input").prop("checked", true);
+	});
+	$("#nonselect").click(function() {
+		$("input").prop("checked", false);
+	});
+	$("#set").click(function() {
+		Nodes = [];
+		$("input:checked").each(function() {
+			Nodes.push(new Node($(this).data("name"), $(this).data("ido"), $(this).data("keido")));
+		});
+	});
+	$("#sales").click(function() {
+		salesman();
+	});
+	$("#view").click(function() {
+		// Google Mapで利用する初期設定用の変数
+		let latlng = new google.maps.LatLng(38, 138);
+		let opts = {
+			zoom: 5,
+			mapTypeId: google.maps.MapTypeId.ROADMAP,
+			center: latlng
+		};
+
+		// getElementById("map")の"map"は、body内の<div id="map">より
+		let map = new google.maps.Map(document.getElementById("map"), opts);
+
+		let pathArray = [];
+		for (let i in MinNodes) {
+			pathArray.push(new google.maps.LatLng(MinNodes[i].ido, MinNodes[i].keido));
+		}
+		// 巡回のため初期値を再設定
+		pathArray.push(new google.maps.LatLng(MinNodes[0].ido, MinNodes[0].keido));
+
+		// Polylineの初期設定
+		let polylineOpts = {
+			map: map,
+			path: pathArray
+		};
+		// 直前で作成したPolylineOptionsを利用してPolylineを作成
+		var let = new google.maps.Polyline(polylineOpts);
+	});
+});
+</script>
+</head>
+<body>
+<h1>巡回セールスマン問題をクラスカル法を使って解く</h1>
+①問題を解く東京23区を選択します。（面倒な方は「全23区を選択状態にする」ボタンを押下します）<br>
+②「区を設定する」⇒「巡回セールスマン問題を解く」⇒「GoogleMapで表示」の順にボタン押下します。<br>
+<input type="button" id="select" value="全23区を選択状態にする">
+<input type="button" id="nonselect" value="全23区を未選択状態にする"><br>
+<input type="button" id="set" value="区を設定する">
+⇒
+<input type="button" id="sales" value="巡回セールスマン問題を解く">
+⇒
+<input type="button" id="view" value="GoogleMapで表示">
+
+<hr>
+
+ここにGoogleMapが表示されます。<br>
+<div id="map" style='width:600px;height:500px;'></div>
+
+<hr>
+
+問題を解く区を選択してください。<br>
+全選択、全選択解除するボタンが上部にあります。<br>
+
+<!-- https://www.gsi.go.jp/KOKUJYOHO/CENTER/kendata/tokyo_heso.pdf -->
+<input type="checkbox" data-name="千代田区" data-ido="35.4138" data-keido="139.4513">千代田区<br>
+<input type="checkbox" data-name="中央区" data-ido="35.4015" data-keido="139.4620">中央区<br>
+<input type="checkbox" data-name="港区" data-ido="35.3929" data-keido="139.4506">港区<br>
+<input type="checkbox" data-name="新宿区" data-ido="35.4138" data-keido="139.4213">新宿区<br>
+<input type="checkbox" data-name="文京区" data-ido="35.4229" data-keido="139.4508">文京区<br>
+<input type="checkbox" data-name="台東区" data-ido="35.4246" data-keido="139.4648">台東区<br>
+<input type="checkbox" data-name="墨田区" data-ido="35.4238" data-keido="139.4806">墨田区<br>
+<input type="checkbox" data-name="江東区" data-ido="35.4023" data-keido="139.4902">江東区<br>
+<input type="checkbox" data-name="品川区" data-ido="35.3632" data-keido="139.4349">品川区<br>
+<input type="checkbox" data-name="目黒区" data-ido="35.3829" data-keido="139.4154">目黒区<br>
+<input type="checkbox" data-name="大田区" data-ido="35.3341" data-keido="139.4258">大田区<br>
+<input type="checkbox" data-name="世田谷区" data-ido="35.3846" data-keido="139.3911">世田谷区<br>
+<input type="checkbox" data-name="渋谷区" data-ido="35.3951" data-keido="139.4155">渋谷区<br>
+<input type="checkbox" data-name="中野区" data-ido="35.4227" data-keido="139.3950">中野区<br>
+<input type="checkbox" data-name="杉並区" data-ido="35.4158" data-keido="139.3811">杉並区<br>
+<input type="checkbox" data-name="豊島区" data-ido="35.4334" data-keido="139.4300">豊島区<br>
+<input type="checkbox" data-name="北区" data-ido="35.4510" data-keido="136.62556">石川県<br>
+<input type="checkbox" data-name="福井県" data-ido="36.06528" data-keido="136.22194">福井県<br>
+<input type="checkbox" data-name="山梨県" data-ido="35.66389" data-keido="138.56833">山梨県<br>
+<input type="checkbox" data-name="長野県" data-ido="36.65139" data-keido="138.18111">長野県<br>
+
+</body>
+</html>
