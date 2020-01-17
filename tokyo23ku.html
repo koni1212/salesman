@@ -15,8 +15,8 @@ $(function() {
 		Nodes = [];
 		$("input:checked").each(function() {
 			// 日本測地系に変換
-			let {japan_lat, japan_lng} = get_japan_latlng($(this).data("ido"), $(this).data("keido"));
-			Nodes.push(new Node($(this).data("name"), japan_lat, japan_lng));
+			let {lat, lng} = get_japan_latlng($(this).data("ido"), $(this).data("keido"));
+			Nodes.push(new Node($(this).data("name"), lat, lng));
 		});
 	});
 	$("#sales").click(function() {
