@@ -3,6 +3,8 @@
 #### デモはこちらから
 https://koni1212.github.io/salesman/
 
+https://koni1212.github.io/salesman/tokyo23ku.html
+
 #### 説明
 日本の都道府県庁所在地をいくつか選択して、巡回セールスマン問題として解いたものをGoogleMap上で経路を表示することができます。
 
