@@ -16,6 +16,7 @@ $(function() {
 		$("input:checked").each(function() {
 			// 日本測地系に変換
 			let {lat, lng} = get_japan_latlng($(this).data("ido"), $(this).data("keido"));
+			console.dir(lat + " " + lng);
 			Nodes.push(new Node($(this).data("name"), lat, lng));
 		});
 	});
