@@ -14,10 +14,7 @@ $(function() {
 	$("#set").click(function() {
 		Nodes = [];
 		$("input:checked").each(function() {
-			// 日本測地系に変換
-			let {lat, lng} = get_japan_latlng($(this).data("ido"), $(this).data("keido"));
-			console.dir(lat + " " + lng);
-			Nodes.push(new Node($(this).data("name"), lat, lng));
+			Nodes.push(new Node($(this).data("name"), $(this).data("ido"), $(this).data("keido")));
 		});
 	});
 	$("#sales").click(function() {
@@ -50,14 +47,6 @@ $(function() {
 		// 直前で作成したPolylineOptionsを利用してPolylineを作成
 		var let = new google.maps.Polyline(polylineOpts);
 	});
-	function get_japan_latlng(lat, lng) {
-		var japan_lat = lat * 1.000106961 - lng * 0.000017467 - 0.004602017,
-		japan_lng = lng * 1.000083049 + lat * 0.000046047 - 0.010041046;
-		return {
-			lat: japan_lat,
-			lng: japan_lng
-		};
-	}
 });
 </script>
 </head>
